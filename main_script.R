@@ -5,6 +5,8 @@ library(tidyverse)
 # Collapses data frame to unique lines while ignoring NA's
 func_paste <- function(x) paste(unique(x[!is.na(x)]), collapse = ", ")
 
+func_paste2 <- function(x) paste(unique(sum(x), collapse = ","))
+
 # Identifies folder names for extracting report.tsv
 folder_names <- function(filepath,pattern) {
   folders <- list.files(path = filepath, pattern = paste0("_",pattern))
@@ -49,6 +51,8 @@ AddCol <- function(df, col_name) {
 
 ## Import files
 
+# Megares
+
 mut_folders <- folder_names("D:\\R-Projects\\Ariba_analysis\\megares", "megares")
 
 mut_data_list <- lapply(mut_folders,
@@ -65,7 +69,27 @@ names(mut_data_list) <- mut_folders
 
 mut_data <- bind_rows(mut_data_list, .id = "ref")
 
+# Resfinder
+
+acquired_folders <- folder_names("D:\\R-Projects\\Ariba_analysis\\resfinder", "resfinder")
+
+acquired_data_list <- lapply(acquired_folders,
+                        FUN = function(folder) {
+                          read.delim(
+                            paste0("resfinder/", folder, "/", "report.tsv"),
+                            stringsAsFactors = F,
+                            header = TRUE,
+                            sep = "\t"
+                          )
+                        })
+
+names(acquired_data_list) <- acquired_folders
+
+acquired_data <- bind_rows(acquired_data_list, .id = "ref")
+
 ## Data wrangling
+
+# Megares
 
 flag_selection <- c("19","27","147","155","403",
                     "411","915","923","787","795",
@@ -93,19 +117,24 @@ test <- test %>%
 
 test_complete <- test[,!names(test) %in% col_names]
 
-
 mut_report <- test_complete %>%
-  gather(key, value, -ref) %>%
-  mutate(gene = gsub("^(.*?)_(.*?)$", "\\1", key),
-         gene = gsub("^(.*?)_(.*?)$", "\\1", gene)) %>%
-  group_by(ref, gene) %>%
-  mutate(mut = ifelse(value == 1, 1, 0)) %>%
-  select(-key) %>%
-  ungroup() %>%
-  mutate(id = 1:n()) %>%
-  spread(gene, mut) %>%
-  group_by(ref)
-  summarise_all(funs(func_paste))
+  gather(key, value, -ref)
+
+# Resfinder
+
+acquired_data_test <- acquired_data %>%
+  select(ref, ref_name, flag, ref_ctg_change) %>%
+  mutate(id = 1:n(),
+         ref_ctg_change = 1,
+         ref_name = gsub("(.*?).[0-9]_(.*?)$", "\\1", ref_name)) %>%
+  filter(flag %in% flag_selection) %>%
+  select(-flag) %>%
+  spread(ref_name, ref_ctg_change) %>%
+  select(-id) %>%
+  group_by(ref) %>%
+  summarise_all(funs(func_paste)) %>%
+  mutate_all(funs(ifelse(. !="", ., 0)))
+
 
 
 
