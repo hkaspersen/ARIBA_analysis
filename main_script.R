@@ -48,6 +48,54 @@ AddCol <- function(df, col_name) {
   return(res)
 }
 
+# Create data frame report from megares data
+create_mut_report <- function(df) {
+  flag_selection <- c("19","27","147","155","403",
+                      "411","915","923","787","795",
+                      "531","539","659","667","787","795")
+  
+  df <- df %>%
+    select(ref, cluster, flag, ref_ctg_change) %>%
+    filter(ref_ctg_change != ".",
+           flag %in% flag_selection) %>%
+    mutate(id = 1:n()) %>%
+    spread(cluster, ref_ctg_change) %>%
+    group_by(ref) %>%
+    summarise_all(funs(func_paste)) %>%
+    select(-c(id, flag))
+  
+  col_names <- colnames(df)
+  col_names <- col_names[-1]
+  
+  cols_to_add <- sapply(function(i) {AddCol(df = df, col_name = col_names[i])}, 
+                        X = seq_along(col_names)) %>% 
+    bind_cols()
+  
+  df <- df %>%
+    bind_cols(cols_to_add)
+  
+  df_complete <- df[,!names(df) %in% col_names]
+  
+  return(df_complete)
+}
+
+# Creates data frame report from resfinder data
+create_AG_report <- function(df) {
+  df <- df %>%
+    select(ref, ref_name, flag, ref_ctg_change) %>%
+    mutate(id = 1:n(),
+           ref_ctg_change = 1,
+           ref_name = gsub("(.*?).[0-9]_(.*?)$", "\\1", ref_name)) %>%
+    filter(flag %in% flag_selection) %>%
+    select(-flag) %>%
+    spread(ref_name, ref_ctg_change) %>%
+    select(-id) %>%
+    group_by(ref) %>%
+    summarise_all(funs(func_paste)) %>%
+    mutate_all(funs(ifelse(. !="", ., 0)))
+  return(df)
+}
+
 
 ## Import files
 
@@ -90,50 +138,11 @@ acquired_data <- bind_rows(acquired_data_list, .id = "ref")
 ## Data wrangling
 
 # Megares
-
-flag_selection <- c("19","27","147","155","403",
-                    "411","915","923","787","795",
-                    "531","539","659","667","787","795")
-
-test <- mut_data %>%
-  select(ref, cluster, flag, ref_ctg_change) %>%
-  filter(ref_ctg_change != ".",
-         flag %in% flag_selection) %>%
-  mutate(id = 1:n()) %>%
-  spread(cluster, ref_ctg_change) %>%
-  group_by(ref) %>%
-  summarise_all(funs(func_paste)) %>%
-  select(-c(id, flag))
-
-col_names <- colnames(test)
-col_names <- col_names[-1]
-
-cols_to_add <- sapply(function(i) {AddCol(df = test, col_name = col_names[i])}, 
-                      X = seq_along(col_names)) %>% 
-  bind_cols()
-
-test <- test %>%
-  bind_cols(cols_to_add)
-
-test_complete <- test[,!names(test) %in% col_names]
-
-mut_report <- test_complete %>%
-  gather(key, value, -ref)
+mut_report_test <- create_mut_report(mut_data)
 
 # Resfinder
+acquired_test <- create_AG_report(acquired_data)
 
-acquired_data_test <- acquired_data %>%
-  select(ref, ref_name, flag, ref_ctg_change) %>%
-  mutate(id = 1:n(),
-         ref_ctg_change = 1,
-         ref_name = gsub("(.*?).[0-9]_(.*?)$", "\\1", ref_name)) %>%
-  filter(flag %in% flag_selection) %>%
-  select(-flag) %>%
-  spread(ref_name, ref_ctg_change) %>%
-  select(-id) %>%
-  group_by(ref) %>%
-  summarise_all(funs(func_paste)) %>%
-  mutate_all(funs(ifelse(. !="", ., 0)))
 
 
 
