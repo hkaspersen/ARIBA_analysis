@@ -5,12 +5,29 @@ library(tidyverse)
 # Collapses data frame to unique lines while ignoring NA's
 func_paste <- function(x) paste(unique(x[!is.na(x)]), collapse = ", ")
 
-func_paste2 <- function(x) paste(unique(sum(x), collapse = ","))
-
 # Identifies folder names for extracting report.tsv
 folder_names <- function(filepath,pattern) {
   folders <- list.files(path = filepath, pattern = paste0("_",pattern))
   return(folders)
+}
+
+# Import ariba data from report.tsv from chosen database used in ariba
+get_ariba_data <- function(path, database) {
+  get_folders <- folder_names(path, database)
+  
+  data_list <- lapply(get_folders,
+                      FUN = function(folder) {
+                        read.delim(
+                          paste0(database, "/", folder, "/", "report.tsv"),
+                          stringsAsFactors = F,
+                          header = TRUE,
+                          sep = "\t"
+                        )
+                      })
+  
+  names(data_list) <- get_folders
+  data <- bind_rows(data_list, .id = "ref")
+  return(data)
 }
 
 # Summarizes data from report.tsv
@@ -81,6 +98,10 @@ create_mut_report <- function(df) {
 
 # Creates data frame report from resfinder data
 create_AG_report <- function(df) {
+  flag_selection <- c("19","27","147","155","403",
+                      "411","915","923","787","795",
+                      "531","539","659","667","787","795")
+  
   df <- df %>%
     select(ref, ref_name, flag, ref_ctg_change) %>%
     mutate(id = 1:n(),
@@ -96,57 +117,42 @@ create_AG_report <- function(df) {
   return(df)
 }
 
-
-## Import files
-
-# Megares
-
-mut_folders <- folder_names("D:\\R-Projects\\Ariba_analysis\\megares", "megares")
-
-mut_data_list <- lapply(mut_folders,
-       FUN = function(folder) {
-         read.delim(
-           paste0("megares/", folder, "/", "report.tsv"),
-           stringsAsFactors = F,
-           header = TRUE,
-           sep = "\t"
-         )
-       })
-
-names(mut_data_list) <- mut_folders
-
-mut_data <- bind_rows(mut_data_list, .id = "ref")
-
-# Resfinder
-
-acquired_folders <- folder_names("D:\\R-Projects\\Ariba_analysis\\resfinder", "resfinder")
-
-acquired_data_list <- lapply(acquired_folders,
-                        FUN = function(folder) {
-                          read.delim(
-                            paste0("resfinder/", folder, "/", "report.tsv"),
-                            stringsAsFactors = F,
-                            header = TRUE,
-                            sep = "\t"
-                          )
-                        })
-
-names(acquired_data_list) <- acquired_folders
-
-acquired_data <- bind_rows(acquired_data_list, .id = "ref")
-
-## Data wrangling
+## Import files and create reports
 
 # Megares
-mut_report_test <- create_mut_report(mut_data)
+mut_data <- get_ariba_data("D:\\R-Projects\\Ariba_analysis\\megares", "megares")
+mut_report <- create_mut_report(mut_data)
 
 # Resfinder
-acquired_test <- create_AG_report(acquired_data)
+gene_data <- get_ariba_data("D:\\R-Projects\\Ariba_analysis\\resfinder", "resfinder")
+gene_report <- create_AG_report(gene_data)
+
+# Statistics
+
+test <- mut_report %>%
+  gather(gene_mut, value, -ref) %>%
+  mutate(gene = gsub("^(.*?)_(.*?)$", "\\1", gene_mut),
+         gene = gsub("[0-9]", "", gene),
+         gene = gsub("^(.*?)_(.*?)$", "\\1", gene),
+         gene = gsub("^(.*?)_$", "\\1", gene),
+         gene = gsub("+", "", gene),
+         gene = gsub("-", "", gene))
 
 
 
+stat_df <- data.frame(t(mut_report))
+colnames(stat_df) <- mut_report$ref
+stat_df$ref <- row.names(stat_df)
+stat_df <- stat_df[-1,]
+row.names(stat_df) <- 1:length(stat_df[,1])
+stat_df_complete <- stat_df[,c(11,1:10)]
 
-
+stat_report <- stat_df_complete %>%
+  mutate_at(.vars = vars(-ref),
+            funs(as.numeric(as.character(.)))) %>%
+  mutate(total = ncol(.)-1,
+         no_samples_mut = rowSums(.[,2:11]))
+  
 
 
 
