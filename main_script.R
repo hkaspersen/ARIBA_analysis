@@ -154,6 +154,19 @@ stat_report <- stat_df_complete %>%
          no_samples_mut = rowSums(.[,2:11]))
   
 
+gene_stat_df <- data.frame(t(gene_report))
+colnames(gene_stat_df) <- gene_report$ref
+gene_stat_df$ref <- row.names(gene_stat_df)
+gene_stat_df <- gene_stat_df[-1,]
+row.names(gene_stat_df) <- 1:length(gene_stat_df[,1])
+gene_stat_df_complete <- gene_stat_df[,c(11,1:10)]
+
+gene_report_df <- gene_stat_df_complete %>%
+  mutate_at(.vars = vars(-ref),
+            funs(as.numeric(as.character(.)))) %>%
+  mutate(total = ncol(.)-1,
+         no_samples_mut = rowSums(.[,2:11]),
+         percent_genes = no_samples_mut/total *100)
 
 
 
