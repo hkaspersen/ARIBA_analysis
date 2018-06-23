@@ -1,5 +1,12 @@
 # Running script for ARIBA analysis
 
+# ------------------------------------ Libraries ----------------------------------------
+
+library(tidyverse)
+library(cowplot)
+library(gridExtra)
+library(grid)
+
 # -------------------------------- Import functions -------------------------------------
 
 source("functions.R")
@@ -26,53 +33,26 @@ acquired_genes <- create_acquired_table(gene_data)
 ### Prepare micplot data
 mic <- read.table("mic_values.txt", sep = "\t", stringsAsFactors = F, header = T)
 
-micplot_mut_data <- create_micplot_data(mut_data)
+micplot_megares_data <- create_micplot_megares_data(mut_data)
+micplot_resfinder_data <- create_micplot_resfinder_data(gene_data)
 
 # ---------------------------------- Plotting -------------------------------------------
 
 ### Quantified mutations heatmap
 quant_heat <- create_mutation_heatmap(quantified_mutations)
 
-ggsave("quantified_mutations_heatmap.tiff",
-       quant_heat,
-       device = "tiff",
-       dpi = 300,
-       width = 35,
-       height = 25,
-       units = "cm")
-
 ### Acquired genes plot
 
 acquired_plot <- PAplot_acquired_genes(acquired_genes)
 
-ggsave("acquired_genes_plot.tiff",
-       acquired_plot,
-       device = "tiff",
-       dpi = 300,
-       width = 20,
-       height = 20,
-       units = "cm")
-
 ### Micplots
 
-cip_plot <- create_micplot(micplot_data, micplot_data$T_CIP)
-nal_plot <- create_micplot(micplot_data, micplot_data$U_NAL)
+#### Megares
 
-ggsave("cip_plot.tiff",
-       cip_plot,
-       device = "tiff",
-       dpi = 300,
-       width = 20,
-       height = 30,
-       units = "cm")
+cip_plot_megares <- create_micplot(micplot_megares_data, micplot_megares_data$T_CIP, "micplot_cip_MR")
+nal_plot_megares <- create_micplot(micplot_megares_data, micplot_megares_data$U_NAL, "micplot_nal_MR")
 
-ggsave("nal_plot.tiff",
-       nal_plot,
-       device = "tiff",
-       dpi = 300,
-       width = 20,
-       height = 30,
-       units = "cm")
+#### Resfinder
 
-
-
+cip_plot_resfinder <- create_micplot(micplot_resfinder_data, micplot_resfinder_data$T_CIP, "micplot_cip_RF")
+nal_plot_resfinder <- create_micplot(micplot_resfinder_data, micplot_resfinder_data$U_NAL, "micplot_nal_RF")
