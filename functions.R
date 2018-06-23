@@ -144,7 +144,7 @@ select_genes <- function(df, gene_string) {
 
 ### Prepares micplot data from raw results
 ### Requires a data frame called "mic" with mic-values
-create_micplot_data <- function(df) {
+create_micplot_megares_data <- function(df) {
   df <- df %>%
     select(ref, cluster, flag, ctg_cov, ref_ctg_change) %>%
     mutate(id = 1:n()) %>%
@@ -166,6 +166,33 @@ create_micplot_data <- function(df) {
     mutate(gene = ifelse(value == 0 & gene != "none", NA, gene),
            value = ifelse(gene == "none" & value == 0, NA, value)) %>%
     na.omit() %>%
+    left_join(mic, by = "ref")
+  return(df)
+}
+
+### Create micplot data from resfinder results
+### Requires data frame with mic-values called "mic"
+create_micplot_resfinder_data <- function(df) {
+  df <- df %>%
+    select(ref, ref_name, flag, ref_ctg_change) %>%
+    mutate(id = 1:n(),
+           ref_ctg_change = 1,
+           ref_name = gsub("(.*?).[0-9]_(.*?)$", "\\1", ref_name)) %>%
+    select(-flag) %>%
+    spread(ref_name, ref_ctg_change) %>%
+    select(-id) %>%
+    group_by(ref) %>%
+    summarise_all(funs(func_paste)) %>%
+    mutate_all(funs(ifelse(. !="", ., 0))) %>%
+    mutate_at(.vars = vars(-ref), funs(as.numeric(.))) %>%
+    mutate(none = ifelse(rowSums(.[,-1]) > 0, 0, 1)) %>%
+    group_by_at(vars(-ref)) %>%
+    { mutate(ungroup(.), group = group_indices(.)) } %>%
+    gather(key = "gene", value = "value", -c(ref, group)) %>%
+    mutate(gene = ifelse(value == 0 & gene != "none", NA, gene),
+           value = ifelse(gene == "none" & value == 0, NA, value)) %>%
+    na.omit() %>%
+    mutate(ref = gsub("(.*?)_resfinder", "\\1", ref)) %>%
     left_join(mic, by = "ref")
   return(df)
 }
@@ -235,12 +262,19 @@ PAplot_acquired_genes <- function(df) {
           axis.text.y = element_blank(),
           legend.title = element_blank())+
     coord_fixed()
-  return(p)
+  
+  ggsave("acquired_genes_plot.tiff",
+         p,
+         device = "tiff",
+         dpi = 300,
+         width = 20,
+         height = 20,
+         units = "cm")
 }
 
 ### Create micplot on selected antimicrobial
 ### data from "create_micplot_data"
-create_micplot <- function(df, am) {
+create_micplot <- function(df, am, plotname) {
   factor_breaks <- c(0.015, 0.03, 0.06, 0.12, 0.25, 0.5, 1, 2, 4, 8, 16, 32, 64, 
                      128, 256, 512, 1024, 2048)
   
@@ -272,15 +306,13 @@ create_micplot <- function(df, am) {
     rel_heights = c(3 / 5, 2 / 5)
   )
   
-  return(p3)
+  ggsave(
+    paste0(plotname, ".tiff"),
+    p3,
+    device = "tiff",
+    dpi = 300,
+    width = 20,
+    height = 30,
+    units = "cm"
+  )
 }
-
-
-
-
-
-
-
-
-
-
