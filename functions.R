@@ -125,6 +125,34 @@ prepare_mut_table <- function(df) {
   return(df)
 }
 
+### Function that returns a table with information
+### on whether or not a gene is mutated
+create_mut_table <- function(df) {
+  flag_selection <- c("19","27","147","155","403",
+                      "411","915","923","787","795",
+                      "531","539","659","667","787","795")
+  df <- df %>%
+    select(ref, cluster, flag, ctg_cov, ref_ctg_change) %>%
+    mutate(id = 1:n()) %>%
+    filter(flag %in% flag_selection) %>%
+    spread(cluster, ref_ctg_change) %>%
+    group_by(ref) %>%
+    summarise_all(funs(func_paste)) %>%
+    mutate(ref = gsub("^(.*?)_(.*?)$", "\\1", ref)) %>%
+    select(-c(id, flag, ctg_cov)) %>%
+    gather(gene, mut,-ref) %>%
+    group_by(gene) %>%
+    filter(!any(mut == "")) %>%
+    ungroup() %>%
+    mutate(mut = ifelse(mut == ".", 0, 1),
+           mut = as.character(mut)) %>%
+    mutate(gene = gsub("[0-9]", "", gene),
+           gene = gsub("-", "", gene),
+           gene = gsub("_", "", gene),
+           gene = gsub("+", "", gene))
+  return(df)
+}
+
 ### Function for selecting genes of interest and filtering the 
 ### columns in the data frame on the resulting vector
 select_genes <- function(df, gene_string) {
@@ -264,6 +292,31 @@ PAplot_acquired_genes <- function(df) {
     coord_fixed()
   
   ggsave("acquired_genes_plot.tiff",
+         p,
+         device = "tiff",
+         dpi = 300,
+         width = 20,
+         height = 20,
+         units = "cm")
+}
+
+### Presence/Absence plot for mutations
+PAplot_mutations <- function(df) {
+  cols <- c("1" = "#95cbee","0" = "#c9e2f6")
+  
+  p <- ggplot(df, aes(gene, ref, fill = mut)) +
+    geom_tile(color = "white")+
+    theme_minimal()+
+    scale_fill_manual(values = cols,
+                      labels = c("Mutated","Wild Type"),
+                      breaks = c("1","0"))+
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.3),
+          axis.title = element_blank(),
+          axis.text.y = element_blank(),
+          legend.title = element_blank())+
+    coord_fixed()
+  
+  ggsave("mutation_plot.tiff",
          p,
          device = "tiff",
          dpi = 300,
