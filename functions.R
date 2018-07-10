@@ -38,22 +38,24 @@ get_ariba_data <- function(path, database) {
 
 ## Data wrangling
 
+# Vector for selection of flags in ariba report
+flag_selection <- c("19","27","147","155","403",
+                    "411","915","923","787","795",
+                    "531","539","659","667","787","795")
+
 ### Function that returns a table with information on
 ### how many mutations was identified in each gene from 
 ### the megares database
 create_no_of_mut_table <- function(df) {
-  flag_selection <- c("19","27","147","155","403",
-                      "411","915","923","787","795",
-                      "531","539","659","667","787","795")
   df <- df %>%
-    select(ref, cluster, flag, ctg_cov, ref_ctg_change) %>%
+    select(ref, cluster, flag, ref_ctg_change) %>%
     mutate(id = 1:n()) %>%
     filter(flag %in% flag_selection) %>%
     spread(cluster, ref_ctg_change) %>%
     group_by(ref) %>%
     summarise_all(funs(func_paste)) %>%
     mutate(ref = gsub("^(.*?)_(.*?)$", "\\1", ref)) %>%
-    select(-c(id, flag, ctg_cov)) %>%
+    select(-c(id, flag)) %>%
     gather(gene, mut,-ref) %>%
     group_by(gene) %>%
     filter(!any(mut == "")) %>%
@@ -77,9 +79,6 @@ create_no_of_mut_table <- function(df) {
 ### Function that returns a data frame with presence/absence of acquired genes
 ### from the resfinder database
 create_acquired_table <- function(df) {
-  flag_selection <- c("19","27","147","155","403",
-                      "411","915","923","787","795",
-                      "531","539","659","667","787","795")
   df <- df %>%
     select(ref, ref_name, flag, ref_ctg_change) %>%
     mutate(id = 1:n(),
@@ -101,13 +100,14 @@ create_acquired_table <- function(df) {
 ### (only for megares data)
 prepare_mut_table <- function(df) {
   df <- df %>%
-    select(ref, cluster, flag, ctg_cov, ref_ctg_change) %>%
+    select(ref, cluster, flag, ref_ctg_change) %>%
+    filter(flag %in% flag_selection) %>%
     mutate(id = 1:n()) %>%
     spread(cluster, ref_ctg_change) %>%
     group_by(ref) %>%
     summarise_all(funs(func_paste)) %>%
     mutate(ref = gsub("^(.*?)_(.*?)$", "\\1", ref)) %>%
-    select(-c(id, flag, ctg_cov)) %>%
+    select(-c(id, flag)) %>%
     gather(gene, mut,-ref) %>%
     mutate(gene = gsub("[0-9]", "", gene),
            gene = gsub("-", "", gene),
@@ -128,18 +128,15 @@ prepare_mut_table <- function(df) {
 ### Function that returns a table with information
 ### on whether or not a gene is mutated
 create_mut_table <- function(df) {
-  flag_selection <- c("19","27","147","155","403",
-                      "411","915","923","787","795",
-                      "531","539","659","667","787","795")
   df <- df %>%
-    select(ref, cluster, flag, ctg_cov, ref_ctg_change) %>%
+    select(ref, cluster, flag, ref_ctg_change) %>%
     mutate(id = 1:n()) %>%
     filter(flag %in% flag_selection) %>%
     spread(cluster, ref_ctg_change) %>%
     group_by(ref) %>%
     summarise_all(funs(func_paste)) %>%
     mutate(ref = gsub("^(.*?)_(.*?)$", "\\1", ref)) %>%
-    select(-c(id, flag, ctg_cov)) %>%
+    select(-c(id, flag)) %>%
     gather(gene, mut,-ref) %>%
     group_by(gene) %>%
     filter(!any(mut == "")) %>%
@@ -174,13 +171,14 @@ select_genes <- function(df, gene_string) {
 ### Requires a data frame called "mic" with mic-values
 create_micplot_megares_data <- function(df) {
   df <- df %>%
-    select(ref, cluster, flag, ctg_cov, ref_ctg_change) %>%
+    select(ref, cluster, flag, ref_ctg_change) %>%
     mutate(id = 1:n()) %>%
+    filter(flag %in% flag_selection) %>%
     spread(cluster, ref_ctg_change) %>%
     group_by(ref) %>%
     summarise_all(funs(func_paste)) %>%
     mutate(ref = gsub("^(.*?)_(.*?)$", "\\1", ref)) %>%
-    select(-c(id, flag, ctg_cov)) %>%
+    select(-c(id, flag)) %>%
     gather(gene, mut,-ref) %>%
     group_by(gene) %>%
     filter(!any(mut == "")) %>%
@@ -206,6 +204,7 @@ create_micplot_resfinder_data <- function(df) {
     mutate(id = 1:n(),
            ref_ctg_change = 1,
            ref_name = gsub("(.*?).[0-9]_(.*?)$", "\\1", ref_name)) %>%
+    filter(flag %in% flag_selection) %>%
     select(-flag) %>%
     spread(ref_name, ref_ctg_change) %>%
     select(-id) %>%
