@@ -21,6 +21,9 @@ gene_data <- get_ariba_data("D:\\R-Projects\\Ariba_analysis\\resfinder", "resfin
 ### Amount of mutations per gene
 quantified_mutations <- create_no_of_mut_table(mut_data)
 
+### Presence/Absence of mutations
+mut_table <- create_mut_table(mut_data)
+
 ### Information on which mutations
 actual_mutations_all <- prepare_mut_table(mut_data)
 
@@ -41,18 +44,21 @@ micplot_resfinder_data <- create_micplot_resfinder_data(gene_data)
 ### Quantified mutations heatmap
 quant_heat <- create_mutation_heatmap(quantified_mutations)
 
+### Presence/Absence of mutations figure
+PAplot_mutations(mut_table)
+
 ### Acquired genes plot
 
-acquired_plot <- PAplot_acquired_genes(acquired_genes)
+PAplot_acquired_genes(acquired_genes)
 
 ### Micplots
 
 #### Megares
 
-cip_plot_megares <- create_micplot(micplot_megares_data, micplot_megares_data$T_CIP, "micplot_cip_MR")
-nal_plot_megares <- create_micplot(micplot_megares_data, micplot_megares_data$U_NAL, "micplot_nal_MR")
+create_micplot(micplot_megares_data, micplot_megares_data$T_CIP, "micplot_cip_MR")
+create_micplot(micplot_megares_data, micplot_megares_data$U_NAL, "micplot_nal_MR")
 
 #### Resfinder
 
-cip_plot_resfinder <- create_micplot(micplot_resfinder_data, micplot_resfinder_data$T_CIP, "micplot_cip_RF")
-nal_plot_resfinder <- create_micplot(micplot_resfinder_data, micplot_resfinder_data$U_NAL, "micplot_nal_RF")
+create_micplot(micplot_resfinder_data, micplot_resfinder_data$T_CIP, "micplot_cip_RF")
+create_micplot(micplot_resfinder_data, micplot_resfinder_data$U_NAL, "micplot_nal_RF")
