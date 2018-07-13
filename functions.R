@@ -12,19 +12,19 @@ get_binCI <- function(x, n) as.numeric(setNames(binom.test(x,n)$conf.int*100,
 ## Data import
 
 ### Identifies folder names for extracting report.tsv
-folder_names <- function(filepath,pattern) {
-  folders <- list.files(path = filepath, pattern = paste0("_",pattern))
+folder_names <- function(filepath) {
+  folders <- list.files(path = filepath, pattern = "_ariba")
   return(folders)
 }
 
 ### Import ariba data from report.tsv from chosen database used in ariba
-get_ariba_data <- function(path, database) {
-  get_folders <- folder_names(path, database)
+get_ariba_data <- function(filepath) {
+  get_folders <- folder_names(filepath)
   
   data_list <- lapply(get_folders,
                       FUN = function(folder) {
                         read.delim(
-                          paste0(database, "/", folder, "/", "report.tsv"),
+                          paste0(filepath, "/", folder, "/", "report.tsv"),
                           stringsAsFactors = F,
                           header = TRUE,
                           sep = "\t"
@@ -38,6 +38,28 @@ get_ariba_data <- function(path, database) {
 
 ## Data wrangling
 
+### Corrects the gene names found in the "cluster" column
+fix_gene_names <- function(df) {
+  cluster <- unique(df$cluster)
+  new_names <- gsub("+", "", cluster, fixed = T)
+  new_names <- gsub("_", "", new_names, fixed = T)
+  new_names <- gsub("-", "", new_names, fixed = T)
+  new_names <- gsub("[0-9]+", "", new_names)
+  
+  gene_names <- c()
+  for (i in new_names) {
+    p <- paste(tolower(substring(i, 1,3)), substring(i, 4), sep = "", collapse = " ")
+    gene_names <- c(gene_names,p)
+  }
+  df2 <- data.frame(cluster,gene_names) %>%
+    mutate(cluster = as.character(cluster))
+  
+  df <- df %>%
+    left_join(df2, by = "cluster")
+  
+  return(df)
+}
+
 # Vector for selection of flags in ariba report
 flag_selection <- c("19","27","147","155","403",
                     "411","915","923","787","795",
@@ -48,10 +70,10 @@ flag_selection <- c("19","27","147","155","403",
 ### the megares database
 create_no_of_mut_table <- function(df) {
   df <- df %>%
-    select(ref, cluster, flag, ref_ctg_change) %>%
+    select(ref, gene_names, flag, ref_ctg_change) %>%
     mutate(id = 1:n()) %>%
     filter(flag %in% flag_selection) %>%
-    spread(cluster, ref_ctg_change) %>%
+    spread(gene_names, ref_ctg_change) %>%
     group_by(ref) %>%
     summarise_all(funs(func_paste)) %>%
     mutate(ref = gsub("^(.*?)_(.*?)$", "\\1", ref)) %>%
@@ -83,7 +105,8 @@ create_acquired_table <- function(df) {
     select(ref, ref_name, flag, ref_ctg_change) %>%
     mutate(id = 1:n(),
            ref_ctg_change = 1,
-           ref_name = gsub("(.*?).[0-9]_(.*?)$", "\\1", ref_name)) %>%
+           ref_name = gsub("(.*?).[0-9]_(.*?)$", "\\1", ref_name),
+           ref = gsub("^(.*?)_(.*?)$", "\\1", ref)) %>%
     filter(flag %in% flag_selection) %>%
     select(-flag) %>%
     spread(ref_name, ref_ctg_change) %>%
@@ -91,7 +114,8 @@ create_acquired_table <- function(df) {
     group_by(ref) %>%
     summarise_all(funs(func_paste)) %>%
     mutate_all(funs(ifelse(. !="", ., 0))) %>%
-    gather(gene, result, -ref)
+    gather(gene, result, -ref) %>%
+    mutate(type = "gene")
   return(df)
 }
 
@@ -100,10 +124,10 @@ create_acquired_table <- function(df) {
 ### (only for megares data)
 prepare_mut_table <- function(df) {
   df <- df %>%
-    select(ref, cluster, flag, ref_ctg_change) %>%
+    select(ref, gene_names, flag, ref_ctg_change) %>%
     filter(flag %in% flag_selection) %>%
     mutate(id = 1:n()) %>%
-    spread(cluster, ref_ctg_change) %>%
+    spread(gene_names, ref_ctg_change) %>%
     group_by(ref) %>%
     summarise_all(funs(func_paste)) %>%
     mutate(ref = gsub("^(.*?)_(.*?)$", "\\1", ref)) %>%
@@ -129,24 +153,25 @@ prepare_mut_table <- function(df) {
 ### on whether or not a gene is mutated
 create_mut_table <- function(df) {
   df <- df %>%
-    select(ref, cluster, flag, ref_ctg_change) %>%
+    select(ref, gene_names, flag, ref_ctg_change) %>%
     mutate(id = 1:n()) %>%
     filter(flag %in% flag_selection) %>%
-    spread(cluster, ref_ctg_change) %>%
+    spread(gene_names, ref_ctg_change) %>%
     group_by(ref) %>%
     summarise_all(funs(func_paste)) %>%
     mutate(ref = gsub("^(.*?)_(.*?)$", "\\1", ref)) %>%
     select(-c(id, flag)) %>%
-    gather(gene, mut,-ref) %>%
+    gather(gene, result,-ref) %>%
     group_by(gene) %>%
-    filter(!any(mut == "")) %>%
+    filter(!any(result == "")) %>%
     ungroup() %>%
-    mutate(mut = ifelse(mut == ".", 0, 1),
-           mut = as.character(mut)) %>%
+    mutate(result = ifelse(result == ".", 0, 1),
+           result = as.character(result)) %>%
     mutate(gene = gsub("[0-9]", "", gene),
            gene = gsub("-", "", gene),
            gene = gsub("_", "", gene),
-           gene = gsub("+", "", gene))
+           gene = gsub("+", "", gene),
+           type = "mut")
   return(df)
 }
 
@@ -171,10 +196,10 @@ select_genes <- function(df, gene_string) {
 ### Requires a data frame called "mic" with mic-values
 create_micplot_megares_data <- function(df) {
   df <- df %>%
-    select(ref, cluster, flag, ref_ctg_change) %>%
+    select(ref, gene_names, flag, ref_ctg_change) %>%
     mutate(id = 1:n()) %>%
     filter(flag %in% flag_selection) %>%
-    spread(cluster, ref_ctg_change) %>%
+    spread(gene_names, ref_ctg_change) %>%
     group_by(ref) %>%
     summarise_all(funs(func_paste)) %>%
     mutate(ref = gsub("^(.*?)_(.*?)$", "\\1", ref)) %>%
@@ -267,11 +292,46 @@ create_mutation_heatmap <- function(df) {
     p,
     device = "tiff",
     units = "cm",
-    dpi = 300,
+    dpi = 100,
     width = 30,
     height = 20
   )
   return(p)
+}
+
+### Percent acquired genes in the isolates plot
+percent_acquired_genes <- function(acquired_genes_df) {
+  df <- acquired_genes_df %>%
+    group_by(gene, result) %>%
+    count() %>%
+    ungroup() %>%
+    mutate(result = ifelse(result == 1, "Present", "Absent")) %>%
+    spread(result, n) %>%
+    mutate(total = Present + Absent,
+           percent = Present/total*100) %>%
+    rowwise() %>%
+    mutate(lwr = get_binCI(Present, total)[1],
+           upr = get_binCI(Present, total)[2])
+  
+  p <- ggplot(df, aes(gene, percent))+
+    geom_col(color = "black")+
+    geom_errorbar(aes(ymin = lwr,
+                      ymax = upr),
+                  width = 0.4,
+                  alpha = 0.4)+
+    labs(x = "Genes",
+         y = "Percent (%) Presence in Isolates")+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  ggsave(
+    "percent_acquired_genes.tiff",
+    p,
+    device = "tiff",
+    units = "cm",
+    dpi = 100,
+    width = 20,
+    height = 20
+  )
 }
 
 ### Presence/absence plot for acquired genes
@@ -293,17 +353,51 @@ PAplot_acquired_genes <- function(df) {
   ggsave("acquired_genes_plot.tiff",
          p,
          device = "tiff",
-         dpi = 300,
+         dpi = 100,
          width = 20,
          height = 20,
          units = "cm")
+}
+
+### Percent plot for mutations in genes
+percent_mutations <- function(mut_table_df) {
+  df <- mut_table_df %>%
+    group_by(gene, result) %>%
+    count() %>%
+    ungroup() %>%
+    mutate(result = ifelse(result == 1, "Present", "Absent")) %>%
+    spread(result, n, fill = 0) %>%
+    mutate(total = Present + Absent,
+           percent = Present/total*100) %>%
+    rowwise() %>%
+    mutate(lwr = get_binCI(Present, total)[1],
+           upr = get_binCI(Present, total)[2])
+  
+  p <- ggplot(df, aes(gene, percent))+
+    geom_col(color = "black")+
+    geom_errorbar(aes(ymin = lwr,
+                      ymax = upr),
+                  width = 0.4,
+                  alpha = 0.4)+
+    labs(x = "Genes",
+         y = "Percent (%) Presence of Mutations in Isolates")+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  ggsave(
+    "percent_mutations.tiff",
+    p,
+    device = "tiff",
+    units = "cm",
+    dpi = 100,
+    width = 30,
+    height = 25)
 }
 
 ### Presence/Absence plot for mutations
 PAplot_mutations <- function(df) {
   cols <- c("1" = "#95cbee","0" = "#c9e2f6")
   
-  p <- ggplot(df, aes(gene, ref, fill = mut)) +
+  p <- ggplot(df, aes(gene, ref, fill = result)) +
     geom_tile(color = "white")+
     theme_minimal()+
     scale_fill_manual(values = cols,
@@ -323,6 +417,44 @@ PAplot_mutations <- function(df) {
          height = 20,
          units = "cm")
 }
+
+### Total presence/absence plot for acquired
+### genes and mutations
+total_presence_absence_plot <- function(mut_table, acquired_table) {
+  df <- rbind(mut_table, acquired_table) %>%
+    mutate(type2 = ifelse(type == "mut", 1, 2))
+  
+  palette <- c("mut" = "#67a9cf", "gene" = "#ef8a62")
+  
+  p <- ggplot(df,
+              aes(fct_reorder(gene, type2),
+                  ref,
+                  fill = type,
+                  alpha = result)) +
+    geom_tile(color = "white")+
+    theme_minimal()+
+    scale_fill_manual(values = palette,
+                      labels = c("Acquired Gene","Mutation"))+
+    labs(fill = NULL)+
+    theme(axis.text.x = element_text(angle = 90,
+                                     hjust = 1,
+                                     vjust = 0.3),
+          axis.title = element_blank(),
+          axis.text.y = element_blank(),
+          panel.grid = element_blank(),
+          legend.position = "top")+
+    guides(alpha = FALSE)+
+    coord_fixed()
+  
+  ggsave("total_presence_absence_plot.tiff",
+         p,
+         device = "tiff",
+         dpi = 100,
+         width = 30,
+         height = 20,
+         units = "cm")
+}
+
 
 ### Create micplot on selected antimicrobial
 ### data from "create_micplot_data"
