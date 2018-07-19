@@ -45,7 +45,7 @@ micplot_resfinder_data <- create_micplot_resfinder_data(gene_data)
 # ---------------------------------- Plotting -------------------------------------------
 
 ### Quantified mutations heatmap
-quant_heat <- create_mutation_heatmap(quantified_mutations)
+create_mutation_heatmap(quantified_mutations)
 
 ### Presence/Absence of mutations figure
 PAplot_mutations(mut_table)

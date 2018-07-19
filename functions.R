@@ -285,16 +285,16 @@ create_mutation_heatmap <- function(df) {
       legend.direction = "horizontal",
       legend.title = element_blank()
     ) +
-    coord_fixed()
+    coord_fixed(0.5)
   
   ggsave(
-    "heamap.tiff",
+    "heatmap.tiff",
     p,
     device = "tiff",
     units = "cm",
-    dpi = 100,
-    width = 30,
-    height = 20
+    dpi = 300,
+    width = 40,
+    height = 60
   )
   return(p)
 }
@@ -371,10 +371,12 @@ percent_mutations <- function(mut_table_df) {
            percent = Present/total*100) %>%
     rowwise() %>%
     mutate(lwr = get_binCI(Present, total)[1],
-           upr = get_binCI(Present, total)[2])
+           upr = get_binCI(Present, total)[2],
+           percent = round(percent, 1))
   
   p <- ggplot(df, aes(gene, percent))+
     geom_col(color = "black")+
+    geom_text(aes(label = percent),vjust = -1)+
     geom_errorbar(aes(ymin = lwr,
                       ymax = upr),
                   width = 0.4,
@@ -403,18 +405,18 @@ PAplot_mutations <- function(df) {
     scale_fill_manual(values = cols,
                       labels = c("Mutated","Wild Type"),
                       breaks = c("1","0"))+
-    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.3),
+    theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.3, size = 18),
           axis.title = element_blank(),
           axis.text.y = element_blank(),
           legend.title = element_blank())+
-    coord_fixed()
+    coord_fixed(0.5)
   
   ggsave("mutation_plot.tiff",
          p,
          device = "tiff",
          dpi = 300,
-         width = 20,
-         height = 20,
+         width = 40,
+         height = 60,
          units = "cm")
 }
 
@@ -434,7 +436,8 @@ total_presence_absence_plot <- function(mut_table, acquired_table) {
     geom_tile(color = "white")+
     theme_minimal()+
     scale_fill_manual(values = palette,
-                      labels = c("Acquired Gene","Mutation"))+
+                      breaks = c("mut","gene"),
+                      labels = c("Mutation","Acquired Gene"))+
     labs(fill = NULL)+
     theme(axis.text.x = element_text(angle = 90,
                                      hjust = 1,
