@@ -1,23 +1,27 @@
-# Running script for ARIBA analysis
+#!/usr/bin/env Rscript
+args <- commandArgs(trailingOnly = TRUE)
 
-# ------------------------------------ Libraries ----------------------------------------
+megares_report_loc <- args[1]
+resfinder_report_loc <- args[2]
+output_dir <- args[3]
+
+# Libraries
 
 library(tidyverse)
 library(cowplot)
 library(gridExtra)
 library(grid)
 library(forcats)
+library(R.utils)
 
-# -------------------------------- Import functions -------------------------------------
+# Import functions
+sourceDirectory("src/")
 
-source("functions.R")
+# Import data
+mut_data <- get_ariba_data(megares_report_loc)
+gene_data <- get_ariba_data(resfinder_report_loc)
 
-# ---------------------------------- Import data ----------------------------------------
-mut_data <- get_ariba_data("D:\\R-Projects\\Ariba_analysis\\ariba_run_megares")
-gene_data <- get_ariba_data("D:\\R-Projects\\Ariba_analysis\\resfinder", "resfinder")
-
-# ------------------------------- Run data wrangling ------------------------------------
-
+# Run functions
 ### Fix gene names in data frame
 clean_mut_data <- fix_gene_names(mut_data)
 
@@ -63,9 +67,9 @@ total_presence_absence_plot(mut_table, acquired_table)
 ### Micplots
 
 #### Megares
-create_micplot(micplot_megares_data, micplot_megares_data$T_CIP, "micplot_cip_MR")
-create_micplot(micplot_megares_data, micplot_megares_data$U_NAL, "micplot_nal_MR")
+#create_micplot(micplot_megares_data, micplot_megares_data$T_CIP, "micplot_cip_MR")
+#create_micplot(micplot_megares_data, micplot_megares_data$U_NAL, "micplot_nal_MR")
 
 #### Resfinder
-create_micplot(micplot_resfinder_data, micplot_resfinder_data$T_CIP, "micplot_cip_RF")
-create_micplot(micplot_resfinder_data, micplot_resfinder_data$U_NAL, "micplot_nal_RF")
+#create_micplot(micplot_resfinder_data, micplot_resfinder_data$T_CIP, "micplot_cip_RF")
+#create_micplot(micplot_resfinder_data, micplot_resfinder_data$U_NAL, "micplot_nal_RF")
