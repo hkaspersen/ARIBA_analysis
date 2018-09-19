@@ -6,11 +6,12 @@ script produces multiple plots and files with information related to
 mutations in intrinsic genes and the presence/absence of acquired genes.
 
 ## Usage
-First, load up R in your terminal: module load R/3.5.0
+First, load up R in your terminal: **module load R/3.5.0**
 
 Then run the following command:
-*Rscript ariba_analysis.R megares_reports_path resfinder_reports_path 
-output_dir_path acquired_genes_file intrinsic_genes_file*
+
+**Rscript ariba_analysis.R megares_reports_path resfinder_reports_path 
+output_dir_path acquired_genes_file intrinsic_genes_file**
 
 - megares_reports_path: Full path to the folder holding the megares 
 reports
