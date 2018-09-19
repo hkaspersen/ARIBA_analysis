@@ -389,7 +389,7 @@ if (length(ac_genes) == 1) {
   acquired_report <- create_acquired_report(acquired_filtered)
 }
 
-mut_quant <- calc_no_of_mut(mut_table)
+mut_quant <- suppressWarnings(calc_no_of_mut(mut_table))
 heatmap_df <- create_heatmap_df(acquired_report)
 
 # ---------------------------------- Plotting
@@ -448,7 +448,7 @@ p3 <- ggplot(heatmap_df, aes(gene, reorder(ref,as.numeric(result)), fill = type,
 
 ggsave(paste0(output_dir, "acquired_stats.svg"), p1, device = "svg", dpi = 100, height = 20, width = 25)
 ggsave(paste0(output_dir, "mut_stats.svg"), p2, device = "svg", dpi = 100, height = 20, width = 25)
-ggsave(paste0(output_dir, "heatmap.svg"), p3, device = "svg", dpi = 100, height = 35, width = 25)
+suppressWarnings(ggsave(paste0(output_dir, "heatmap.svg"), p3, device = "svg", dpi = 100, height = 35, width = 25))
 
 # ---------------------------------- Tables
 
