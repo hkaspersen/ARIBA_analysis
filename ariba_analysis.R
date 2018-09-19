@@ -25,8 +25,8 @@ if (length(mut_genes) == 1) {
 }
 # -------------------------------------- Libraries
 if (!require("pacman")) install.packages("pacman")
-pacman::p_load(ggplot2,dplyr,tidyr,gridExtra,grid,cowplot,
-               forcats,R.utils,purrr,stringr,kableExtra,
+pacman::p_load(ggplot2,dplyr,tidyr,gridExtra,grid,
+               forcats,purrr,stringr,kableExtra,
                knitr,IRdisplay,reprex)
 
 # -------------------------------------- Functions
