@@ -4,8 +4,11 @@ args <- commandArgs(trailingOnly = TRUE)
 megares_report_loc <- args[1]
 resfinder_report_loc <- args[2]
 output_dir <- args[3]
-ac_genes <- args[4]
-mut_genes <- args[5]
+ac_genes_loc <- args[4]
+in_genes_loc <- args[5]
+
+ac_genes <- readLines(ac_genes_loc)
+mut_genes <- readLines(in_genes_loc)
 
 # adjust parameters for filtering
 if (length(ac_genes) == 1) {
@@ -24,6 +27,7 @@ if (length(mut_genes) == 1) {
     }
 }
 # -------------------------------------- Libraries
+
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(ggplot2,dplyr,tidyr,gridExtra,grid,
                forcats,purrr,stringr,kableExtra,
