@@ -1,11 +1,11 @@
 #!/usr/bin/env Rscript
 args <- commandArgs(trailingOnly = TRUE)
 
-megares_report_loc <- "C:/Users/VI1511/OneDrive - Veterinærinstituttet/R/R_Projects/qrec_wgs1/data/ariba/megares_results"
-resfinder_report_loc <- "C:/Users/VI1511/OneDrive - Veterinærinstituttet/R/R_Projects/qrec_wgs1/data/ariba/resfinder_results"
-output_dir <- "C:/Users/VI1511/OneDrive - Veterinærinstituttet/R/R_Results/ARIBA/"
-ac_genes <- c("qnr", "bla", "tet", "sul", "oqx")
-mut_genes <- c("gyr","par","mar","tol","acr","omp","sox")
+megares_report_loc <- args[1]
+resfinder_report_loc <- args[2]
+output_dir <- args[3]
+ac_genes <- args[4]
+mut_genes <- args[5]
 
 # adjust parameters for filtering
 if (length(ac_genes) == 1) {
