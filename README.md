@@ -25,3 +25,37 @@ genes. Same rule applies to all genes. To get all genes reported by
 resfinder, simply input "all" in this file
 - intrinsic_genes_file: Path to file holding the list of intrisic genes 
 of interest. Same rules as above.
+
+## File descriptions
+Plots
+
+- acquired_stats.svg: A figure showing basic statistics for the chosen 
+acquired genes, including the percent of isolates with these genes 
+present, and a 95 % confidence interval.
+- mut_stats.svg: Similar to acquired_stats.svg, but only for the chosen 
+intrinsic genes on interest. The figure shows the percent of isolates 
+with mutations in the intrinsic genes. The script includes mutation 
+position correction for gyrA, gyrB, parC and parE.
+- heatmap.svg: A heatmap over mutations in gyrA, gyrB, parC and parE, 
+along with presence/absence of qnr-genes. 
+
+Tables
+
+- acquired_report: Contains present/absent data on selected acquired 
+genes for each isolate included. One row per isolate.
+- mut_report: Similar to acquired_report, except with mutations in 
+intrinsic genes.
+- mut_flags: Contains a list over all mutations reported by ARIBA 
+MegaRes, and their corresponding flag. The "flag_result" column reports 
+whether or not the flag passed the filtering (1 = passed).
+- acquired_flags: Same as above, but for acquired genes.
+- mut_quant: Contains information about which mutation was found in 
+gyrA, gyrB, parC, and parE, and also how many mutations were found in 
+each respective gene (mut_gyrA etc). Each row is an isolate.
+- no_of_mut: Contains the number of isolates for each number of 
+mutations group. Each row corresponds to one group, where "n" is the 
+amount of isolates with the corresponding number of mutations listed in 
+the other columns.
+- mut_combinations: Contains the number of isolates for each mutation in 
+the genes gyrA, gyrB, parC, and parE. The actual mutations are listed 
+here.
