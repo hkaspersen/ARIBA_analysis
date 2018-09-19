@@ -6,7 +6,17 @@ script produces multiple plots and files with information related to
 mutations in intrinsic genes and the presence/absence of acquired genes.
 
 ## Usage
-First, load up R in your terminal: **module load R/3.5.0**
+Make sure that your .Rprofile file have the correct library path before 
+beginning. The .Rprofile file is located in your home folder, and you 
+get there by typing **cd**. Type in **nano .Rprofile**, and paste in the 
+following:
+
+*path <- "/work/projects/nn9305k/lib/R/"*
+
+*.libPaths(c(path, .libPaths()))*
+
+
+Load up R in your terminal: **module load R/3.5.0**
 
 Then run the following command:
 
