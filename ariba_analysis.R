@@ -27,7 +27,7 @@ if (length(mut_genes) == 1) {
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(ggplot2,dplyr,tidyr,gridExtra,grid,
                forcats,purrr,stringr,kableExtra,
-               knitr,IRdisplay,reprex)
+               knitr,IRdisplay,reprex,svglite)
 
 # -------------------------------------- Functions
 # Collapses data frame to unique lines while ignoring NA's
@@ -39,7 +39,7 @@ get_binCI <- function(x, n) as.numeric(setNames(binom.test(x,n)$conf.int*100,
 
 # Identifies filenames in input folder
 file_names <- function(filepath) {
-  files <- list.files(path = filepath, pattern = "amr_report")
+  files <- list.files(path = filepath, pattern = "amr_report.tsv")
   return(files)
 }
 
@@ -314,6 +314,36 @@ create_acquired_report <- function(df) {
   return(df)
 }
 
+# prepares data frame for number of mutations heatmap
+create_heatmap_df <- function(df) {
+  qnr <- names(df)
+  
+  qnr_cols <- c()
+  
+  for (i in qnr) {
+    if (grepl("qnr", i, ignore.case = TRUE) == TRUE) {
+      qnr_cols <- c(qnr_cols, i)
+    }
+  }
+  
+  qnr_df <- df %>%
+    select_at(vars(ref, qnr_cols)) %>%
+    gather(gene, result, -ref) %>%
+    mutate(type = "Gene")
+  
+  qnr_mut_quant <- mut_quant %>%
+    select(-c("gyrA","gyrB","parC","parE")) %>%
+    mutate(type = "Mut") %>%
+    gather(gene, result, -c(ref, type)) %>%
+    mutate(gene = case_when(gene == "mut_gyrA" ~ "gyrA",
+                            gene == "mut_gyrB" ~ "gyrB",
+                            gene == "mut_parC" ~ "parC",
+                            gene == "mut_parE" ~ "parE",
+                            TRUE ~ gene)) %>%
+    rbind(., qnr_df)
+  return(qnr_mut_quant)
+}
+
 # -------------------------------------- Analysis
 # Import data
 mut_data <- get_ariba_data(megares_report_loc)
@@ -356,8 +386,9 @@ if (length(ac_genes) == 1) {
 }
 
 mut_quant <- calc_no_of_mut(mut_table)
+heatmap_df <- create_heatmap_df(acquired_report)
 
-# ---------------------------------- Plotting 
+# ---------------------------------- Plotting
 
 # Total acquired genes
 p1 <- ggplot(acquired_stats, aes(gene, Percent))+
@@ -387,8 +418,33 @@ p2 <- ggplot(mut_stats, aes(gene, Percent))+
         axis.title.y = element_text(size = 24),
         plot.title = element_text(size = 30))
 
+# Heatmap for gyr/par genes and qnr genes
+p3 <- ggplot(heatmap_df, aes(gene, reorder(ref,as.numeric(result)), fill = type, alpha = factor(result)))+
+  geom_tile()+
+  geom_vline(xintercept = 4.5,
+             alpha = 0.3)+
+  scale_fill_manual(values = c("Mut" = "#1f78b4",
+                               "Gene" = "#33a02c"),
+                    limits = c("Mut",
+                               "Gene"),
+                    labels = c(" Intrinsic Genes ",
+                               " Acquired Genes"))+
+  guides(alpha = FALSE)+
+  theme_classic()+
+  theme(axis.text.y = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.3, size = 40),
+        axis.title = element_blank(),
+        axis.ticks = element_blank(),
+        axis.line = element_blank(),
+        legend.title = element_blank(),
+        legend.text = element_text(size = 40),
+        legend.spacing = unit(1, "cm"),
+        legend.position = "top")+
+  coord_fixed(0.1)
+
 ggsave(paste0(output_dir, "acquired_stats.svg"), p1, device = "svg", dpi = 100, height = 20, width = 25)
 ggsave(paste0(output_dir, "mut_stats.svg"), p2, device = "svg", dpi = 100, height = 20, width = 25)
+ggsave(paste0(output_dir, "heatmap.svg"), p3, device = "svg", dpi = 100, height = 35, width = 25)
 
 # ---------------------------------- Tables
 
