@@ -1,4 +1,4 @@
-# ARIBA_analysis
+# ARIBA analysis script
 
 ## Information
 This is an R script designed to work in a shell bash environment. The 
