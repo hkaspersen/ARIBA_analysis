@@ -403,9 +403,9 @@ p1 <- ggplot(acquired_stats, aes(gene, Percent))+
        y = "Percent (%) of isolates")+
   theme_classic()+
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.4),
-        axis.text = element_text(size = 16),
+        axis.text = element_text(size = 24),
         axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 24),
+        axis.title.y = element_text(size = 30),
         plot.title = element_text(size = 30))
 
 # Mutations in selected intrinsic genes
@@ -417,9 +417,9 @@ p2 <- ggplot(mut_stats, aes(gene, Percent))+
        y = "Percent (%) of isolates")+
   theme_classic()+
   theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.4),
-        axis.text = element_text(size = 16),
+        axis.text = element_text(size = 24),
         axis.title.x = element_blank(),
-        axis.title.y = element_text(size = 24),
+        axis.title.y = element_text(size = 30),
         plot.title = element_text(size = 30))
 
 # Heatmap for gyr/par genes and qnr genes
