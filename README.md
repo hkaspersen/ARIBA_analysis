@@ -5,6 +5,10 @@ This is an R script designed to work in a shell bash environment. The
 script produces multiple plots and files with information related to 
 mutations in intrinsic genes and the presence/absence of acquired genes.
 
+The script is designed to work with files from the Bifrost pipeline, 
+found [here](https://github.com/NorwegianVeterinaryInstitute/Bifrost), 
+run on the MegaRes and ResFinder databases, in separate folders.
+
 ## Usage
 Make sure that your .Rprofile file have the correct library path before 
 beginning. The .Rprofile file is located in your home folder, and you 
