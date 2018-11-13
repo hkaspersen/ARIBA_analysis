@@ -24,7 +24,9 @@ Load up R in your terminal: **module load R/3.5.0**
 
 Then run the following command:
 
-**Rscript ariba_analysis.R megares_reports_path resfinder_reports_path 
+**Rscript /work/projects/nn9305k/vi_src/ARIBA_analysis/ariba_analysis.R 
+megares_reports_path 
+resfinder_reports_path 
 output_dir_path acquired_genes_file intrinsic_genes_file**
 
 - **megares_reports_path**: Full path to the folder holding the megares 
