@@ -27,7 +27,8 @@ Then run the following command:
 **Rscript /work/projects/nn9305k/vi_src/ARIBA_analysis/ariba_analysis.R 
 megares_reports_path 
 resfinder_reports_path 
-output_dir_path acquired_genes_file intrinsic_genes_file**
+output_dir_path acquired_genes_file intrinsic_genes_file 
+heatmap_selection**
 
 - **megares_reports_path**: Full path to the folder holding the megares 
 reports
@@ -41,6 +42,9 @@ genes. Same rule applies to all genes. To get all genes reported by
 resfinder, simply input "all" in this file
 - **intrinsic_genes_file**: Path to file holding the list of intrisic 
 genes of interest. Same rules as above.
+- **heatmap_selection**: TRUE/FALSE, whether or not the heatmap should 
+be generated. Note that this will fail if there are no Qnr genes present 
+in the dataset (to be fixed).
 
 ## File descriptions
 Plots
