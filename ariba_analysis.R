@@ -6,6 +6,7 @@ resfinder_report_loc <- args[2]
 output_dir <- args[3]
 ac_genes_loc <- args[4]
 in_genes_loc <- args[5]
+heatmap_selection <- args[6]
 
 ac_genes <- readLines(ac_genes_loc)
 mut_genes <- readLines(in_genes_loc)
@@ -390,7 +391,10 @@ if (length(ac_genes) == 1) {
 }
 
 mut_quant <- suppressWarnings(calc_no_of_mut(mut_table))
-heatmap_df <- create_heatmap_df(acquired_report)
+
+if (heatmap_selection == TRUE) {
+  heatmap_df <- create_heatmap_df(acquired_report)
+}
 
 # ---------------------------------- Plotting
 
@@ -423,32 +427,35 @@ p2 <- ggplot(mut_stats, aes(gene, Percent))+
         plot.title = element_text(size = 30))
 
 # Heatmap for gyr/par genes and qnr genes
-p3 <- ggplot(heatmap_df, aes(gene, reorder(ref,as.numeric(result)), fill = type, alpha = factor(result)))+
-  geom_tile()+
-  geom_vline(xintercept = 4.5,
-             alpha = 0.3)+
-  scale_fill_manual(values = c("Mut" = "#1f78b4",
-                               "Gene" = "#33a02c"),
-                    limits = c("Mut",
-                               "Gene"),
-                    labels = c(" Intrinsic Genes ",
-                               " Acquired Genes"))+
-  guides(alpha = FALSE)+
-  theme_classic()+
-  theme(axis.text.y = element_blank(),
-        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.3, size = 40),
-        axis.title = element_blank(),
-        axis.ticks = element_blank(),
-        axis.line = element_blank(),
-        legend.title = element_blank(),
-        legend.text = element_text(size = 40),
-        legend.spacing = unit(1, "cm"),
-        legend.position = "top")+
-  coord_fixed(0.1)
+if (heatmap_selection == TRUE) {
+  p3 <- ggplot(heatmap_df, aes(gene, reorder(ref,as.numeric(result)), fill = type, alpha = factor(result)))+
+    geom_tile()+
+    geom_vline(xintercept = 4.5,
+               alpha = 0.3)+
+    scale_fill_manual(values = c("Mut" = "#1f78b4",
+                                 "Gene" = "#33a02c"),
+                      limits = c("Mut",
+                                 "Gene"),
+                      labels = c(" Intrinsic Genes ",
+                                 " Acquired Genes"))+
+    guides(alpha = FALSE)+
+    theme_classic()+
+    theme(axis.text.y = element_blank(),
+          axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.3, size = 40),
+          axis.title = element_blank(),
+          axis.ticks = element_blank(),
+          axis.line = element_blank(),
+          legend.title = element_blank(),
+          legend.text = element_text(size = 40),
+          legend.spacing = unit(1, "cm"),
+          legend.position = "top")+
+    coord_fixed(0.1)
+  
+  suppressWarnings(ggsave(paste0(output_dir, "heatmap.svg"), p3, device = "svg", dpi = 100, height = 35, width = 25))
+}
 
 ggsave(paste0(output_dir, "acquired_stats.svg"), p1, device = "svg", dpi = 100, height = 20, width = 25)
 ggsave(paste0(output_dir, "mut_stats.svg"), p2, device = "svg", dpi = 100, height = 20, width = 25)
-suppressWarnings(ggsave(paste0(output_dir, "heatmap.svg"), p3, device = "svg", dpi = 100, height = 35, width = 25))
 
 # ---------------------------------- Tables
 
