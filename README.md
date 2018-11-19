@@ -15,21 +15,24 @@ beginning. The .Rprofile file is located in your home folder, and you
 get there by typing **cd**. Type in **nano .Rprofile**, and paste in the 
 following:
 
-*path <- "/work/projects/nn9305k/lib/R/"*
+```
+path <- "/work/projects/nn9305k/lib/R/"
 
-*.libPaths(c(path, .libPaths()))*
+.libPaths(c(path, .libPaths()))
+```
 
-
-Load up R in your terminal: **module load R/3.5.0**
-
+Load up R in your terminal: 
+```
+module load R/3.5.0
+```
 Then run the following command:
-
-**Rscript /work/projects/nn9305k/vi_src/ARIBA_analysis/ariba_analysis.R 
+```
+Rscript /work/projects/nn9305k/vi_src/ARIBA_analysis/ariba_analysis.R 
 megares_reports_path 
 resfinder_reports_path 
 output_dir_path acquired_genes_file intrinsic_genes_file 
-heatmap_selection**
-
+heatmap_selection
+```
 - **megares_reports_path**: Full path to the folder holding the megares 
 reports
 - **resfinder_reports_path**: Full path to the folder holding the 
