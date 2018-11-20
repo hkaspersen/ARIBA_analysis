@@ -256,11 +256,18 @@ calc_stats <- function(df) {
     ungroup() %>%
     mutate(result_total = if_else(result_total == 1, "Present", "Absent")) %>%
     spread(result_total, n, fill = 0) %>%
+    mutate(Absent = if ("Absent" %in% names(.)) {
+      return(Absent)
+    } else {
+      return(0) # adds Absent column with all 0 if all isolates have genes
+    }) %>%
     rowwise() %>%
-    mutate(Total = Present + Absent,
-           Percent = round(Present/Total*100, 1),
-           lwr = round(get_binCI(Present, Total)[1], 1),
-           upr = round(get_binCI(Present, Total)[2], 1))
+    mutate(
+      Total = Present + Absent,
+      Percent = round(Present / Total * 100, 1),
+      lwr = round(get_binCI(Present, Total)[1], 1),
+      upr = round(get_binCI(Present, Total)[2], 1)
+    )
   return(df)
 }
 
