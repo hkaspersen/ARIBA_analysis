@@ -279,26 +279,20 @@ calc_no_of_mut <- function(df) {
     mutate(entries = sapply(strsplit(.$mut, ","), FUN = function(x) {length(x)})) %>%
     separate(mut, into = as.character(c(1:max(.$entries)))) %>%
     select(-entries) %>%
-    gather(id, mut, -c(ref, gene, result, type))
-  
-  df2 <- fix_gyr_par_results(df1)
-  
-  df3 <- df2 %>%
-    mutate(test = ifelse(mut != "0" & result_total == 0, 0, 1)) %>%
+    gather(id, mut, -c(ref, gene, result, type)) %>% # ID = number of mutation
+    fix_gyr_par_results(.) %>%
+    filter(!is.na(mut)) %>%
+    mutate(test = case_when(mut == "0" & result_total == "0" ~ 0,
+                            mut != "0" & result_total == "0" ~ 0,
+                            mut != "0" & result_total == "1" ~ 1)) %>%
     filter(test == 1) %>%
     spread(gene, mut) %>%
     group_by(ref) %>%
     summarise_all(funs(func_paste)) %>%
-    mutate_at(.vars = vars(c("gyrA","gyrB","parC","parE")),
-              .funs = function(x) ifelse(x == "0", "", x)) %>%
-    mutate(mut_gyrA = sapply(strsplit(.$gyrA, ","), FUN = function(x) {length(x)}),
-           mut_gyrB = sapply(strsplit(.$gyrB, ","), FUN = function(x) {length(x)}),
-           mut_parC = sapply(strsplit(.$parC, ","), FUN = function(x) {length(x)}),
-           mut_parE = sapply(strsplit(.$parE, ","), FUN = function(x) {length(x)})) %>%
     select(-c(type, id, result_total, test)) %>%
-    mutate_at(.vars = vars(c("gyrA","gyrB","parC","parE")),
+    mutate_at(.vars = vars(-ref),
               .funs = function(x) ifelse(x == "", "0", x))
-  return(df3)
+  return(df1)
 }
 
 # creates a data frame with one row per sample, and 1/0 results 
@@ -468,12 +462,12 @@ ggsave(paste0(output_dir, "mut_stats.svg"), p2, device = "svg", dpi = 100, heigh
 
 # number of mutations table
 mut_no <- mut_quant %>%
-  group_by(mut_gyrA, mut_gyrB, mut_parC, mut_parE) %>%
+  group_by_at(vars(-ref)) %>%
   count()
 
 # number of isolates per mutation combination
 mut_comb <- mut_quant %>%
-  group_by(gyrA, gyrB, parC, parE) %>%
+  group_by_at(vars(-ref)) %>%
   count()
 
 # write tables to file
