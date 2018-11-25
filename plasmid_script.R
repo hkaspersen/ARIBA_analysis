@@ -12,7 +12,8 @@ output_loc <- args[2]
 
 # ------------------------ Load libraries -------------------------
 
-if (!require("pacman")) install.packages("pacman")
+suppressPackageStartupMessages(if (!require("pacman")) 
+  install.packages("pacman"))
 suppressPackageStartupMessages(
   pacman::p_load(
     ggplot2, 
@@ -169,3 +170,19 @@ plasmid_table <- create_plasmid_table(plasmid_data)
 plasmid_report <- create_plasmid_report(plasmid_table)
 
 plasmid_quant <- calc_stats(plasmid_table)
+
+# Write to output folder
+write.table(plasmid_report,
+            paste0(plasmid_output, "plasmid_report.tsv"),
+            sep = "\t",
+            row.names = FALSE)
+
+write.table(plasmid_quant,
+            paste0(plasmid_output, "plasmid_stats.tsv"),
+            sep = "\t",
+            row.names = FALSE)
+
+write.table(plasmid_flags,
+            paste0(plasmid_output, "plasmid_flags.tsv"),
+            sep = "\t",
+            row.names = FALSE)

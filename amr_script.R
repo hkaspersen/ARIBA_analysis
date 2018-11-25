@@ -28,21 +28,24 @@ if (grepl("all", in_genes, ignore.case = TRUE) == TRUE) {
 
 # ------------------------ Load libraries -------------------------
 
-if (!require("pacman")) install.packages("pacman")
-pacman::p_load(
-  ggplot2,
-  dplyr,
-  tidyr,
-  gridExtra,
-  grid,
-  forcats,
-  purrr,
-  stringr,
-  kableExtra,
-  knitr,
-  IRdisplay,
-  reprex,
-  svglite
+suppressPackageStartupMessages(if (!require("pacman")) 
+  install.packages("pacman"))
+suppressPackageStartupMessages(
+  pacman::p_load(
+    ggplot2,
+    dplyr,
+    tidyr,
+    gridExtra,
+    grid,
+    forcats,
+    purrr,
+    stringr,
+    kableExtra,
+    knitr,
+    IRdisplay,
+    reprex,
+    svglite
+    )
 )
 
 # -------------------------- Functions ----------------------------

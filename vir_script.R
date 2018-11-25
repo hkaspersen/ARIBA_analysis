@@ -7,12 +7,13 @@
 # ------------------------- Parameters ----------------------------
 
 args <- commandArgs(trailingOnly = TRUE)
-report_loc <- args[1]
+report_loc <- "D:/test/test_reports/virulence_reports"
 output_loc <- args[2]
 
 # ------------------------ Load libraries -------------------------
 
-if (!require("pacman")) install.packages("pacman")
+suppressPackageStartupMessages(if (!require("pacman")) 
+  install.packages("pacman"))
 suppressPackageStartupMessages(
   pacman::p_load(
     ggplot2, 
@@ -119,8 +120,7 @@ create_vir_table <- function(df) {
     select(-c(id, flag)) %>%
     gather(gene, result,-ref) %>%
     mutate(result_total = ifelse(result == "", 0, 1),
-           result_total = as.character(result_total),
-           type = "gene") %>%
+           result_total = as.character(result_total)) %>%
     select(-result)
   return(df)
 }
@@ -157,7 +157,22 @@ create_vir_report <- function(df) {
     mutate(id = 1:n()) %>%
     spread(gene, result_total) %>%
     summarise_all(funs(func_paste)) %>%
-    select(-c(id, type))
+    select(-id)
+  return(df)
+}
+
+create_summary_report <- function(df) {
+  df <- df %>%
+    mutate(gene = sub("(.*?)_.+", "\\1", gene)) %>%
+    group_by(ref, gene, result_total) %>%
+    summarise_all(funs(func_paste)) %>%
+    group_by(ref) %>%
+    mutate(id = 1:n()) %>%
+    spread(gene, result_total) %>%
+    summarise_all(funs(func_paste)) %>%
+    select(-id) %>%
+    mutate_at(vars(-ref),
+              funs(ifelse(. == "0, 1", "1", "0")))
   return(df)
 }
 
@@ -179,11 +194,17 @@ vir_flags <- check_flags(clean_vir_data)
 # Wrangle
 vir_table <- create_vir_table(clean_vir_data)
 vir_report <- create_vir_report(vir_table)
+vir_summary <- create_summary_report(vir_table)
 vir_quant <- calc_stats(vir_table)
 
 # Write to output folder
 write.table(vir_report,
-            paste0(vir_output, "virulence_report.tsv"),
+            paste0(vir_output, "virulence_detailed_report.tsv"),
+            sep = "\t",
+            row.names = FALSE)
+
+write.table(vir_summary,
+            paste0(vir_output, "virulence_summary_report.tsv"),
             sep = "\t",
             row.names = FALSE)
 
