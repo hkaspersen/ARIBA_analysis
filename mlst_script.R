@@ -13,7 +13,8 @@ output_loc <- args[2]
 
 # ------------------------ Load libraries -------------------------
 
-if (!require("pacman")) install.packages("pacman")
+suppressPackageStartupMessages(
+  if (!require("pacman")) install.packages("pacman"))
 suppressPackageStartupMessages(
   pacman::p_load(
     ggplot2,
