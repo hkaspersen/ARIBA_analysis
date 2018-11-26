@@ -22,15 +22,11 @@ parser <- OptionParser(usage = "Usage: %prog [options]")
 
 # Create command line options
 parser <- add_option(parser,
-                     c("-a", "--amr"),
-                     action = "store_true",
-                     help = "Run AMR gene analysis.")
-parser <- add_option(parser,
                      c("-u", "--mut"),
                      action = "store",
                      help = "Location of intrinsic gene reports.")
 parser <- add_option(parser,
-                     c("-q", "--acq"),
+                     c("-a", "--acq"),
                      action = "store",
                      help = "Location of acquired gene reports.")
 parser <- add_option(parser,
@@ -66,21 +62,40 @@ if (is.null(opt$output)) {
 }
 
 ## ------------------- Tracks ----------------------
-## AMR gene track
-if (!is.null(opt$amr)) {
-  print(paste0(
-    "Running AMR gene summary analysis. Intrinsic gene reports location: ",
-    opt$u,
-    ". Acquired gene reports location: ",
-    opt$q,
+## Intrinsic AMR genes track
+if (!is.null(opt$mut)) {
+  if (is.null(opt$intrinsic)) {
+    print("Please specify genes of interest.")
+    stop()
+  } else {
+    print(paste0(
+      "Running intrinsic AMR gene summary analysis. Reports location: ",
+    opt$mut,
     ". Output location: ",
-    opt$o))
-  system(paste("Rscript amr_script.R",
-               opt$u, 
-               opt$q, 
-               opt$o, 
-               opt$c,
-               opt$i))
+    opt$out))
+  system(paste("Rscript intrinsic_script.R",
+               opt$mut, 
+               opt$out, 
+               opt$intrinsic))
+  }
+}
+
+## Acquired AMR genes track
+if (!is.null(opt$acq)) {
+  if (is.null(opt$acquired)) {
+    print("Please specify genes of interest.")
+    stop()
+  } else {
+    print(paste0(
+      "Running acquired AMR gene summary analysis. Reports location: ",
+    opt$acq,
+    ". Output location: ",
+    opt$out))
+  system(paste("Rscript acquired_script.R",
+               opt$acq, 
+               opt$out, 
+               opt$acquired))
+  }
 }
 
 ## Virulence gene track
@@ -89,8 +104,8 @@ if (!is.null(opt$vir)) {
     "Running virulence gene summary analysis. Reports location: ",
     opt$vir,
     ". Output location: ",
-    opt$o))
-  system(paste("Rscript vir_script.R", opt$v, opt$o))
+    opt$out))
+  system(paste("Rscript vir_script.R", opt$vir, opt$out))
 }
 
 ## MLST track
@@ -99,8 +114,8 @@ if (!is.null(opt$mlst)) {
     "Running MLST summary analysis. Reports location: ", 
     opt$mlst,
     ". Output location: ",
-    opt$o))
-  system(paste("Rscript mlst_script.R", opt$m, opt$o))
+    opt$out))
+  system(paste("Rscript mlst_script.R", opt$mlst, opt$out))
 }
 
 ## Plasmid typing track
@@ -109,6 +124,6 @@ if (!is.null(opt$plasmid)) {
     "Running plasmid summary analysis. Reports location: ",
     opt$plasmid,
     ". Output location: ",
-    opt$o))
-  system(paste("Rscript plasmid_script.R", opt$p, opt$o))
+    opt$out))
+  system(paste("Rscript plasmid_script.R", opt$plasmid, opt$out))
 }
